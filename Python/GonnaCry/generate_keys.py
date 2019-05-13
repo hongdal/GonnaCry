@@ -10,7 +10,8 @@ def generate_key(bits, encode=False):
     
     if(encode):
         return base64.b64encode(content)
-
+    
+    print(type(content))
     return content
 
 if __name__ == "__main__":

