@@ -1,7 +1,11 @@
 # Quick install on Ubuntu
 
 * conda install pycrypto
-* 
+
+# Detection
+
+* open() + read() + unlink() in a time window. 
+
 
 # GonnaCry Rasomware 
 Original Repository of the GonnaCry Ransomware.
