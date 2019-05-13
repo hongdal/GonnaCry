@@ -41,7 +41,7 @@ class assymetric():
         self.public_key_path = os.path.join(path, "public.key")
 
         with open(self.private_key_path, 'w') as content_file:
-            chmod(self.private_key_path, 0600) # -rw------- permissions 
+            chmod(self.private_key_path, 0o0600) # -rw------- permissions 
             content_file.write(self.private_key_PEM)
 
         with open(self.public_key_path, 'w') as content_file:
